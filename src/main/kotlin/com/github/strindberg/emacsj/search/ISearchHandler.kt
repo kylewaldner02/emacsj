@@ -49,7 +49,36 @@ class ISearchHandler(private val direction: Direction, private val type: SearchT
             }
         } else {
             MarkHandler.pushPlaceInfo(editor)
-            delegate = ISearchDelegate(editor, type, direction)
+
+            // If there's selected text, use it to start the search
+            if (editor.selectionModel.hasSelection()) {
+                val selectedText = editor.selectionModel.selectedText ?: ""
+                if (selectedText.isNotEmpty()) {
+                    val currentCaret = editor.caretModel.primaryCaret
+
+                    // For backward search, position caret at end of selection (so we can find it going backward)
+                    // For forward search, position caret at start of selection (so we can find it going forward)
+                    val targetOffset = if (direction == Direction.BACKWARD) {
+                        editor.selectionModel.selectionEnd
+                    } else {
+                        editor.selectionModel.selectionStart
+                    }
+
+                    // Clear selection first
+                    editor.selectionModel.removeSelection()
+
+                    // Move caret to the appropriate position BEFORE creating delegate
+                    currentCaret.moveToOffset(targetOffset)
+
+                    // Now create delegate (which will initialize CaretSearch with correct position)
+                    delegate = ISearchDelegate(editor, type, direction)
+                    delegate?.searchAllCarets(searchDirection = direction, newText = selectedText)
+                } else {
+                    delegate = ISearchDelegate(editor, type, direction)
+                }
+            } else {
+                delegate = ISearchDelegate(editor, type, direction)
+            }
         }
     }
 

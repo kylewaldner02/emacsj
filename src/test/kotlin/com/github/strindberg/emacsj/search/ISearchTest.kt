@@ -2038,6 +2038,34 @@ class ISearchTest : BasePlatformTestCase() {
         ISearchHandler.delegate?.hide()
     }
 
+    fun `test Search with selected text works`() {
+        myFixture.configureByText(FILE, "foo <selection>bar</selection> baz")
+
+        myFixture.performEditorAction(ACTION_ISEARCH_FORWARD)
+        myFixture.checkResult("foo bar<caret> baz")
+        assertEquals("bar", ISearchHandler.delegate?.text)
+        assertEquals(Pair(1, 1), ISearchHandler.delegate?.ui?.count)
+    }
+
+    fun `test Search with selected text works in reverse`() {
+        myFixture.configureByText(FILE, "foo <selection>bar</selection> baz")
+
+        myFixture.performEditorAction(ACTION_ISEARCH_BACKWARD)
+        myFixture.checkResult("foo <caret>bar baz")
+        assertEquals("bar", ISearchHandler.delegate?.text)
+        assertEquals(Pair(1, 1), ISearchHandler.delegate?.ui?.count)
+    }
+
+    fun `test Search without selection works normally`() {
+        myFixture.configureByText(FILE, "<caret>foo bar baz")
+
+        myFixture.performEditorAction(ACTION_ISEARCH_FORWARD)
+        myFixture.type("bar")
+        myFixture.checkResult("foo bar<caret> baz")
+        assertEquals("bar", ISearchHandler.delegate?.text)
+        assertEquals(Pair(1, 1), ISearchHandler.delegate?.ui?.count)
+    }
+
     private fun pressPopupEnter() {
         val textField = ISearchHandler.delegate!!.ui.textField
         val popup = ISearchHandler.delegate!!.ui.popup
