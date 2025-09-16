@@ -61,6 +61,13 @@ internal class ISearchDelegate(private val editor: Editor, val type: SearchType,
         }
     }
 
+    // Flag to track if search was started with selected text
+    private var startedWithSelection = false
+
+    internal fun setStartedWithSelection(started: Boolean) {
+        startedWithSelection = started
+    }
+
     private val identifierAttributes: TextAttributes
 
     private lateinit var typedHandler: RestorableTypedActionHandler
@@ -374,6 +381,24 @@ internal class ISearchDelegate(private val editor: Editor, val type: SearchType,
     }
 
     private fun cancel() {
+        // If search was started with selected text, select the found text when completing
+        if (startedWithSelection) {
+            editor.caretModel.runForEachCaret { caret ->
+                if (caret.isValid && caret.search.match.start != caret.search.match.end) {
+                    // Position cursor correctly based on search direction
+                    val cursorOffset = if (direction == Direction.FORWARD) {
+                        caret.search.match.end
+                    } else {
+                        caret.search.match.start
+                    }
+
+                    // Select the found text
+                    caret.setSelection(caret.search.match.start, caret.search.match.end)
+                    caret.moveToOffset(cursorOffset)
+                }
+            }
+        }
+
         ui.cancelUI()
     }
 

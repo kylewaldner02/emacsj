@@ -78,6 +78,7 @@ class ISearchHandler(private val direction: Direction, private val type: SearchT
 
                     // Now create delegate (which will initialize CaretSearch with correct position)
                     delegate = ISearchDelegate(editor, type, direction)
+                    delegate?.setStartedWithSelection(true)
                     delegate?.searchAllCarets(searchDirection = direction, newText = selectedText)
                 } else {
                     delegate = ISearchDelegate(editor, type, direction)

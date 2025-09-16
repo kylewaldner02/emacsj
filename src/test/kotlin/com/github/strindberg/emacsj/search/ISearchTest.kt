@@ -2066,6 +2066,31 @@ class ISearchTest : BasePlatformTestCase() {
         assertEquals(Pair(1, 1), ISearchHandler.delegate?.ui?.count)
     }
 
+    fun `test Search completion with selected text selects found text - forward`() {
+        myFixture.configureByText(FILE, "foo <selection>bar</selection> baz")
+
+        myFixture.performEditorAction(ACTION_ISEARCH_FORWARD)
+        pressEnter()
+        myFixture.checkResult("foo <selection>bar</selection><caret> baz")
+    }
+
+    fun `test Search completion with selected text selects found text - backward`() {
+        myFixture.configureByText(FILE, "foo <selection>bar</selection> baz")
+
+        myFixture.performEditorAction(ACTION_ISEARCH_BACKWARD)
+        pressEnter()
+        myFixture.checkResult("foo <caret><selection>bar</selection> baz")
+    }
+
+    fun `test Search completion without selected text does not select found text`() {
+        myFixture.configureByText(FILE, "<caret>foo bar baz")
+
+        myFixture.performEditorAction(ACTION_ISEARCH_FORWARD)
+        myFixture.type("bar")
+        pressEnter()
+        myFixture.checkResult("foo bar<caret> baz")
+    }
+
     private fun pressPopupEnter() {
         val textField = ISearchHandler.delegate!!.ui.textField
         val popup = ISearchHandler.delegate!!.ui.popup
