@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
+import com.intellij.openapi.editor.ex.EditorEx
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -66,6 +67,11 @@ class ISearchHandler(private val direction: Direction, private val type: SearchT
 
                     // Clear selection first
                     editor.selectionModel.removeSelection()
+
+                    // Turn off sticky selection mode to prevent selection from growing during search
+                    if (editor is EditorEx) {
+                        editor.isStickySelection = false
+                    }
 
                     // Move caret to the appropriate position BEFORE creating delegate
                     currentCaret.moveToOffset(targetOffset)
