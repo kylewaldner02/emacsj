@@ -412,6 +412,19 @@
                 class="com.github.strindberg.emacsj.actions.line.TransposeLinesAction">
             <keyboard-shortcut first-keystroke="control X" second-keystroke="control T" keymap="Emacs"/>
         </action>
+
+        <action id="com.github.strindberg.emacsj.actions.symbol.symboloverlayput"
+                class="com.github.strindberg.emacsj.actions.symbol.SymbolOverlayPutAction">
+        </action>
+        <action id="com.github.strindberg.emacsj.actions.symbol.symboloverlayjumpnext"
+                class="com.github.strindberg.emacsj.actions.symbol.SymbolOverlayJumpNextAction">
+        </action>
+        <action id="com.github.strindberg.emacsj.actions.symbol.symboloverlayjumpprev"
+                class="com.github.strindberg.emacsj.actions.symbol.SymbolOverlayJumpPrevAction">
+        </action>
+        <action id="com.github.strindberg.emacsj.actions.symbol.symboloverlayremoveall"
+                class="com.github.strindberg.emacsj.actions.symbol.SymbolOverlayRemoveAllAction">
+        </action>
     </actions>
 
 </idea-plugin>
