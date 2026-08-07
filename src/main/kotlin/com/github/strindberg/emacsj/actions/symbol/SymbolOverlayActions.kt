@@ -69,6 +69,7 @@ class SymbolOverlayPutHandler : EditorActionHandler() {
 class SymbolOverlayJumpNextHandler : EditorActionHandler() {
     override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
         val handler = SymbolOverlayHandler(editor)
+        @Suppress("RETURN_VALUE_NOT_USED")
         handler.jumpNext()
     }
 }
@@ -79,6 +80,7 @@ class SymbolOverlayJumpNextHandler : EditorActionHandler() {
 class SymbolOverlayJumpPrevHandler : EditorActionHandler() {
     override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
         val handler = SymbolOverlayHandler(editor)
+        @Suppress("RETURN_VALUE_NOT_USED")
         handler.jumpPrev()
     }
 }

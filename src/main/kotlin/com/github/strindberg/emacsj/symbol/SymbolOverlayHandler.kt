@@ -16,42 +16,26 @@ class SymbolOverlayHandler(private val editor: Editor) {
     /**
      * Jumps to the next occurrence of the symbol at the current caret position
      */
-    fun jumpNext(): Boolean {
-        val caret = editor.caretModel.primaryCaret
-        val symbol = getSymbolAtPoint(caret.offset) ?: return false
-
-        val occurrences = findSymbolOccurrences(symbol)
-        if (occurrences.isEmpty()) return false
-
-        val currentIndex = findCurrentOccurrenceIndex(caret.offset, occurrences)
-        val nextIndex = (currentIndex + 1) % occurrences.size
-
-        // Calculate relative position within current symbol
-        val currentOccurrence = occurrences[currentIndex]
-        val relativePosition = caret.offset - currentOccurrence.startOffset
-
-        jumpToOccurrence(occurrences[nextIndex], relativePosition)
-        return true
-    }
+    fun jumpNext(): Boolean = jump { currentIndex, size -> (currentIndex + 1) % size }
 
     /**
      * Jumps to the previous occurrence of the symbol at the current caret position
      */
-    fun jumpPrev(): Boolean {
-        val caret = editor.caretModel.primaryCaret
-        val symbol = getSymbolAtPoint(caret.offset) ?: return false
+    fun jumpPrev(): Boolean = jump { currentIndex, size -> if (currentIndex == 0) size - 1 else currentIndex - 1 }
 
-        val occurrences = findSymbolOccurrences(symbol)
+    private fun jump(indexToJumpTo: (currentIndex: Int, size: Int) -> Int): Boolean {
+        val caret = editor.caretModel.primaryCaret
+        val occurrences = getSymbolAtPoint(caret.offset)?.let { findSymbolOccurrences(it) }.orEmpty()
+
         if (occurrences.isEmpty()) return false
 
         val currentIndex = findCurrentOccurrenceIndex(caret.offset, occurrences)
-        val prevIndex = if (currentIndex == 0) occurrences.size - 1 else currentIndex - 1
 
         // Calculate relative position within current symbol
         val currentOccurrence = occurrences[currentIndex]
         val relativePosition = caret.offset - currentOccurrence.startOffset
 
-        jumpToOccurrence(occurrences[prevIndex], relativePosition)
+        jumpToOccurrence(occurrences[indexToJumpTo(currentIndex, occurrences.size)], relativePosition)
         return true
     }
 
@@ -59,11 +43,11 @@ class SymbolOverlayHandler(private val editor: Editor) {
      * Highlights all occurrences of the symbol at the current caret position
      */
     fun highlightSymbolAtPoint(): Boolean {
-        val caret = editor.caretModel.primaryCaret
-        val symbol = getSymbolAtPoint(caret.offset) ?: return false
+        val occurrences = getSymbolAtPoint(editor.caretModel.primaryCaret.offset)?.let { symbol ->
+            clearHighlights()
+            findSymbolOccurrences(symbol)
+        }.orEmpty()
 
-        clearHighlights()
-        val occurrences = findSymbolOccurrences(symbol)
         if (occurrences.isEmpty()) return false
 
         highlightAllOccurrences(occurrences)
@@ -138,11 +122,10 @@ class SymbolOverlayHandler(private val editor: Editor) {
     /**
      * Finds the index of the occurrence that contains the given offset
      */
-    private fun findCurrentOccurrenceIndex(caretOffset: Int, occurrences: List<FindResult>): Int {
-        return occurrences.indexOfFirst { occurrence ->
+    private fun findCurrentOccurrenceIndex(caretOffset: Int, occurrences: List<FindResult>): Int =
+        occurrences.indexOfFirst { occurrence ->
             caretOffset >= occurrence.startOffset && caretOffset <= occurrence.endOffset
         }.takeIf { it >= 0 } ?: 0
-    }
 
     /**
      * Highlights all symbol occurrences
