@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- The XRef history now records navigation to an implementation, a super method and a usage, in addition to navigation to a declaration, and
+  records navigation made with the mouse, such as picking an entry from a popup of candidates or clicking a usage in the *Find Usages* tool
+  window.
+
 ## [1.5.7] - 2026-07-31
 
 ### Fixed

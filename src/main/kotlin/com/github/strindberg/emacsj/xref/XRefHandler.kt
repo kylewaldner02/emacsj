@@ -49,6 +49,55 @@ class XRefHandler(private val type: XRefType) : EditorActionHandler() {
             }
         }
 
+        @Volatile
+        private var isNavigationExpected = false
+
+        /**
+         * Announces navigation to a definition, an implementation or a usage that is about to be made from somewhere
+         * other than a command, such as a click on a usage in the *Find Usages* tool window. The place left behind is
+         * not known until the platform has recorded it, in [pushNavigationPlace].
+         */
+        internal fun expectNavigation() {
+            isNavigationExpected = true
+        }
+
+        /**
+         * Called before a command that navigates to a definition, an implementation or a usage. The caret has not
+         * moved yet, so the place to remember is the current one. A command that opens a popup of candidates counts as
+         * well: whichever entry is picked, the navigation starts out from here.
+         */
+        internal fun pushNavigationPlace(editor: Editor, project: Project) {
+            (editor as? EditorEx)?.virtualFile?.let { virtualFile ->
+                MarkHandler.placeInfo(editor, virtualFile)?.let { place ->
+                    pushOnce(place, project)
+                }
+            }
+        }
+
+        /**
+         * Called for places that the platform records as navigated away from. Announced navigation is awaited, since
+         * the platform records these places for every kind of navigation, ordinary caret movement included.
+         */
+        internal fun pushAnnouncedPlace(place: PlaceInfo, project: Project) {
+            if (MarkHandler.isNavigatingToPlace || !isNavigationExpected) return
+
+            isNavigationExpected = false
+
+            pushOnce(place, project)
+        }
+
+        /**
+         * A single navigation can be seen both as a command and as a place recorded by the platform, and is pushed
+         * only once.
+         */
+        private fun pushOnce(place: PlaceInfo, project: Project) {
+            places.getOrPut(project.name) { UndoRedoStack() }.let { stack ->
+                if (stack.peek() != place) {
+                    stack.push(place)
+                }
+            }
+        }
+
         private fun getPlaceForBackAction(editor: Editor): PlaceInfo? =
             getPlaceUsingHistory(editor) { stack, current -> stack.undo(current) }
 

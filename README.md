@@ -486,6 +486,11 @@ When using any of the (IntelliJ standard) commands *Go to Declaration* or *Go to
 from which the jump is made, creating a stack of previous positions. This stack can be popped with the command *XRef Go Back*, and one can
 thus easily go back to previous positions.
 
+The position is saved for the commands *Go to Implementation*, *Go to Super Method*, *Find Usages* and *Show Usages* as well, including when
+the target is picked with the mouse from a popup of candidates, and for clicking a usage in the *Find Usages* tool window. Only navigation
+to a position in a file is saved: opening a file from the project view or among recent files, and ordinary caret movement, leave the stack
+untouched.
+
 After *XRef Go Back*, the command *XRef Go Forward* can be invoked to return to the point where *XRef Go Back* was invoked.
 This is supported by a forward/redo stack that can be traversed in multiple levels.
 

@@ -4,6 +4,7 @@ import com.github.strindberg.emacsj.EmacsJService
 import com.github.strindberg.emacsj.mark.Type.POP
 import com.github.strindberg.emacsj.search.prependElement
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
@@ -57,16 +58,29 @@ class MarkHandler(val type: Type) : EditorActionHandler() {
                 )
             }
 
+        /**
+         * True while a place of our own is being navigated to. Navigation performed by the plugin itself is recorded
+         * by the platform just like any other navigation, and must not be pushed onto the XRef stack again.
+         */
+        internal var isNavigatingToPlace = false
+            private set
+
         internal fun gotoPlaceInfo(editor: EditorEx, info: PlaceInfo) {
-            editor.project?.manager?.let { manager ->
-                manager.openFile(info.file, focusEditor = true)
-                manager.setSelectedEditor(info.file, info.editorTypeId)
-                manager.getSelectedEditorWithProvider(info.file)?.takeIf {
-                    it.provider.editorTypeId == info.editorTypeId
-                }?.let {
-                    it.fileEditor.setState(info.state)
-                    editor.scrollingModel.scrollVertically(info.scrollOffset)
+            isNavigatingToPlace = true
+            try {
+                editor.project?.manager?.let { manager ->
+                    manager.openFile(info.file, focusEditor = true)
+                    manager.setSelectedEditor(info.file, info.editorTypeId)
+                    manager.getSelectedEditorWithProvider(info.file)?.takeIf {
+                        it.provider.editorTypeId == info.editorTypeId
+                    }?.let {
+                        it.fileEditor.setState(info.state)
+                        info.scrollOffset?.let { scrollOffset -> editor.scrollingModel.scrollVertically(scrollOffset) }
+                    }
                 }
+            } finally {
+                // The platform registers its place when the surrounding command finishes, which is after this call.
+                ApplicationManager.getApplication().invokeLater { isNavigatingToPlace = false }
             }
         }
     }
@@ -103,7 +117,7 @@ class PlaceInfo(
     val state: FileEditorState,
     val editorTypeId: String,
     val caretPosition: Int,
-    val scrollOffset: Int,
+    val scrollOffset: Int?,
 ) {
     override fun equals(other: Any?): Boolean =
         (other as? PlaceInfo)?.let {
@@ -124,6 +138,11 @@ class UndoRedoStack<T> {
         undoStack = prependElement(position, undoStack)
         redoStack = emptyList()
     }
+
+    /**
+     * The position that a following undo would return to, without changing either stack.
+     */
+    fun peek(): T? = undoStack.firstOrNull()
 
     /**
      * Undo the last cursor movement.
