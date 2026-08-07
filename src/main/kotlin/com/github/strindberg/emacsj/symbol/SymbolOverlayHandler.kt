@@ -112,12 +112,22 @@ class SymbolOverlayHandler(private val editor: Editor) {
             val result = findManager.findString(text, offset, findModel)
             if (!result.isStringFound) break
 
-            occurrences.add(result)
+            if (text.isWholeSymbolAt(result.startOffset, result.endOffset)) {
+                occurrences.add(result)
+            }
             offset = maxOf(result.endOffset, offset + 1)
         }
 
         return occurrences
     }
+
+    /**
+     * A match counts as an occurrence of the symbol only when it isn't part of a longer word. Jumping between the
+     * occurrences of `downloadExportUseCase` must not stop at `downloadExportUseCaseTest`.
+     */
+    private fun CharSequence.isWholeSymbolAt(startOffset: Int, endOffset: Int): Boolean =
+        (startOffset == 0 || !isWordCharacter(this[startOffset - 1])) &&
+            (endOffset >= length || !isWordCharacter(this[endOffset]))
 
     /**
      * Finds the index of the occurrence that contains the given offset
