@@ -33,6 +33,20 @@ class UndoRedoStackTest : TestCase() {
         assertEquals("C", stack.redo("B")) // redo to C
     }
 
+    fun `test Peek returns top of undo stack without changing it`() {
+        val stack = UndoRedoStack<String>()
+
+        assertNull(stack.peek())
+
+        stack.push("A")
+        stack.push("B")
+
+        assertEquals("B", stack.peek())
+        assertEquals("B", stack.peek())
+        assertEquals("B", stack.undo("C"))
+        assertEquals("A", stack.peek())
+    }
+
     fun `test Empty stack behavior`() {
         val stack = UndoRedoStack<String>()
 

@@ -1,0 +1,7 @@
+<idea-plugin>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <navigation.navigationHandler implementation="com.github.strindberg.emacsj.xref.XRefNavigationHandler"/>
+    </extensions>
+
+</idea-plugin>
