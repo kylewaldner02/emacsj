@@ -58,6 +58,8 @@ internal class ISearchDelegate(val editor: Editor, var searchType: SearchType, v
     @VisibleForTesting
     internal var state: ISearchState = SEARCH
 
+    private var startedWithSelection = false
+
     private val breadcrumbs = mutableListOf<EditorBreadcrumb>()
 
     private val rangeHighlighters = mutableListOf<RangeHighlighter>()
@@ -214,6 +216,7 @@ internal class ISearchDelegate(val editor: Editor, var searchType: SearchType, v
     }
 
     internal fun swapSearchStopAndThenCancel() {
+        startedWithSelection = false
         editor.caretModel.allCarets.forEach { caret ->
             if (caret.isValid) {
                 caret.moveToOffset(if (direction == FORWARD) caret.search.match.start else caret.search.match.end)
@@ -223,6 +226,7 @@ internal class ISearchDelegate(val editor: Editor, var searchType: SearchType, v
     }
 
     internal fun markSearchStopAndThenCancel() {
+        startedWithSelection = false
         if (editor is EditorEx) {
             editor.caretModel.currentCaret.let { caret ->
                 caret.moveToOffset(if (direction == FORWARD) caret.search.match.start else caret.search.match.end)
@@ -260,7 +264,23 @@ internal class ISearchDelegate(val editor: Editor, var searchType: SearchType, v
     }
 
     internal fun cancel() {
+        if (startedWithSelection) {
+            selectMatches()
+        }
         ui.cancelUI()
+    }
+
+    /**
+     * A search that started out from selected text ends with the match selected, so that the search leaves the editor
+     * in the state it was found in.
+     */
+    private fun selectMatches() {
+        editor.caretModel.runForEachCaret { caret ->
+            if (caret.isValid && caret.search.match.start != caret.search.match.end) {
+                caret.setSelection(caret.search.match.start, caret.search.match.end)
+                caret.moveToOffset(if (direction == FORWARD) caret.search.match.end else caret.search.match.start)
+            }
+        }
     }
 
     internal fun handleChar(charTyped: Char) {
@@ -296,6 +316,8 @@ internal class ISearchDelegate(val editor: Editor, var searchType: SearchType, v
     }
 
     private fun searchSelected() {
+        startedWithSelection = true
+
         val selectedText = editor.selectionModel.selectedText.orEmpty()
         val origin = if (direction == FORWARD) editor.selectionModel.selectionStart else editor.selectionModel.selectionEnd
 

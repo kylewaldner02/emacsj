@@ -2272,6 +2272,48 @@ class ISearchTest : BasePlatformTestCase() {
         assertEquals(Pair(2, 2), ISearchHandler.delegate?.ui?.count)
     }
 
+    fun `test Search completion with selected text selects found text`() {
+        myFixture.configureByText(FILE, "foo <selection>bar</selection> baz")
+        ISearchHandler.isSelectionISearch = true
+
+        myFixture.performEditorAction(ACTION_ISEARCH_FORWARD)
+        pressEnter()
+
+        myFixture.checkResult("foo <selection>bar<caret></selection> baz")
+    }
+
+    fun `test Search completion with selected text selects found text in reverse`() {
+        myFixture.configureByText(FILE, "foo <selection>bar</selection> baz")
+        ISearchHandler.isSelectionISearch = true
+
+        myFixture.performEditorAction(ACTION_ISEARCH_BACKWARD)
+        pressEnter()
+
+        myFixture.checkResult("foo <selection><caret>bar</selection> baz")
+    }
+
+    fun `test Search completion without selected text does not select found text`() {
+        myFixture.configureByText(FILE, "<caret>foo bar baz")
+
+        myFixture.performEditorAction(ACTION_ISEARCH_FORWARD)
+        myFixture.type("bar")
+        pressEnter()
+
+        myFixture.checkResult("foo bar<caret> baz")
+    }
+
+    fun `test Search started from selection leaves caret at match start with swap`() {
+        myFixture.configureByText(FILE, "foo <selection>bar</selection> baz bar")
+        ISearchHandler.isSelectionISearch = true
+
+        myFixture.performEditorAction(ACTION_ISEARCH_FORWARD)
+        myFixture.performEditorAction(ACTION_ISEARCH_FORWARD)
+        myFixture.performEditorAction(ACTION_ISEARCH_SWAP)
+        ISearchHandler.delegate?.hide()
+
+        myFixture.checkResult("foo bar baz <caret>bar")
+    }
+
     private fun pressEnter() {
         myFixture.performEditorAction(ACTION_ISEARCH_ENTER)
         ISearchHandler.delegate?.hide()
